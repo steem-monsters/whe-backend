@@ -21,7 +21,7 @@ function main(){
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         if (result == 'valid_deposit') {
           let payload = JSON.parse(tx.payload)
-          return sendEthereumTokens.start(payload.quantity, payload.memo)
+          sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
         }
       })
       .catch(err => console.log(err))
