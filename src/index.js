@@ -1,3 +1,4 @@
+require('dotenv')
 const database = require("./mongoDatabase.js");
 
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
@@ -12,6 +13,7 @@ database.connect()
   })
 
 function main(){
+  // TODO: verify config is correct
   console.log(`Starting the Oracle node!\nToken Symbol: ${process.env.TOKEN_SYMBOL}\nHive account: ${process.env.HIVE_ACCOUNT}`)
   hiveEngineDeposits.start((tx) => {
     processHiveEngineDeposit.start(tx)
