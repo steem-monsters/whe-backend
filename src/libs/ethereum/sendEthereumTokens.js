@@ -4,12 +4,12 @@ const axios = require("axios");
 const { Hive } = require("@splinterlands/hive-interface")
 
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETHEREUM_ENDPOINT));
-const hive = new Hive({rpc_error_limit: 5}, {rpc_nodes: process.env.HIVE_RPC_NODES});
+const hive = new Hive({rpc_error_limit: 5}, {rpc_nodes: process.env.HIVE_RPC_NODES.split(',')});
 
 const tokenABI = require("./tokenABI.js");
 const hiveEngineTokenPrice = require("../market/hiveEngineTokenPrice.js")
 
-function start(depositAmount, address, sender){
+async function start(depositAmount, address, sender){
   try {
     let gasPrice = await getRecomendedGasPrice()
     let amount = depositAmount * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION); //remove decimal places => 0.001, 3 decimal places => 0.001 * 1000 = 1
@@ -102,8 +102,8 @@ function getRecomendedGasPrice(){
   })
 }
 
-function caculateTransactionFee(contract, address, amount, gasPrice){
-  return new Promise((resolve, reject) => {
+async function caculateTransactionFee(contract, address, amount, gasPrice){
+  return new Promise(async (resolve, reject) => {
     let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount);
     let estimatedGas = await contractFunction.estimateGas({ from: process.env.ETHEREUM_ADDRESS });
     let wei = estimatedGas * gasPrice * 1000000000

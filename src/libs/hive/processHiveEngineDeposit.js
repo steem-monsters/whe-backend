@@ -2,13 +2,13 @@ const Web3 = require("web3")
 const Tx = require('ethereumjs-tx').Transaction;
 const { Hive } = require("@splinterlands/hive-interface")
 
-const web3 = new Web3(new Web3.providers.HttpProvider(proceess.env.ETHEREUM_ENDPOINT));
-const hive = new Hive({rpc_error_limit: 5}, {rpc_nodes: process.env.HIVE_RPC_NODES});
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETHEREUM_ENDPOINT));
+const hive = new Hive({rpc_error_limit: 5}, {rpc_nodes: process.env.HIVE_RPC_NODES.split(',')});
 
 const isAlreadyProcessed = []
 
 function start(tx){
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let { transactionId, sender, contract, action, payload, logs } = tx
       payload = JSON.parse(payload)
