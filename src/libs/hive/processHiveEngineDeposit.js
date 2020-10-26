@@ -27,7 +27,7 @@ function start(tx){
             memo: `Refund! Are you sure the amount is between ${process.env.MIN_AMOUNT} and ${process.env.MAX_AMOUNT} and memo is valid Ethereum address?`
           }
         }
-        let transaction = await hive.customJson('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY);
+        let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
         resolve(`deposit_refunded`)
       }
     } catch (e){
@@ -37,4 +37,17 @@ function start(tx){
   })
 }
 
+async function transfer(username, amount, hash){
+  let json = {
+    contractName: "tokens", contractAction: "transfer", contractPayload: {
+      symbol: process.env.TOKEN_SYMBOL,
+      to: username,
+      quantity: parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION),
+      memo: `${parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION)} ${process.env.TOKEN_SYMBOL} converted! Transaction hash: ${hash}`
+    }
+  }
+  let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
+}
+
 module.exports.start = start
+module.exports.transfer = transfer

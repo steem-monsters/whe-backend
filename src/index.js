@@ -1,10 +1,17 @@
 require('dotenv').config();
 const assert = require('assert');
+const level = require("level")
+
+const database = level("./database")
+
+const setupDatabase = require("./libs/setup/setupDatabase.js")
 
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
 const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
-const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
+
 const scanEthereumTransactions = require("./libs/ethereum/scanEthereumTransactions.js")
+const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
+const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
 
 const methods = ["mint", "transfer"]
 assert(process.env.TOKEN_SYMBOL.length > 1, "TOKEN_SYMBOL length must be more than 1")
@@ -21,19 +28,24 @@ async function main(){
   console.log(`Token Symbol: ${process.env.TOKEN_SYMBOL}\nHive account: ${process.env.HIVE_ACCOUNT}\nEthereum contract: ${process.env.ETHEREUM_CONTRACT_ADDRESS}`)
   console.log("-".repeat(process.stdout.columns))
 
-  // hiveEngineDeposits.start((tx) => {
-  //   processHiveEngineDeposit.start(tx)
-  //     .then(async (result) => {
-  //       if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
-  //       if (result == 'valid_deposit') {
-  //         let payload = JSON.parse(tx.payload)
-  //         sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
-  //       }
-  //     })
-  //     .catch(err => console.log(err))
-  // })
+  hiveEngineDeposits.start((tx) => {
+    processHiveEngineDeposit.start(tx)
+      .then(async (result) => {
+        if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
+        if (result == 'valid_deposit') {
+          let payload = JSON.parse(tx.payload)
+          sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
+        }
+      })
+      .catch(err => console.log(err))
+  })
 
-  scanEthereumTransactions.start()
+  scanEthereumTransactions.start(database, (tx) => {
+    processEthereumTransaction.start(tx)
+      .then((result) => {
+        processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
+      })
+  })
 }
 
 main()
