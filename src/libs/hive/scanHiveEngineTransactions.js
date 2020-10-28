@@ -1,6 +1,8 @@
 const { HiveEngine } = require("@splinterlands/hive-interface")
 const hive_engine = new HiveEngine();
 
+let alreadyProcessed = []
+
 function start(callback){
   try {
    hive_engine.stream((tx) => {
@@ -11,7 +13,11 @@ function start(callback){
          payload.symbol == process.env.TOKEN_SYMBOL &&
          payload.to == process.env.HIVE_ACCOUNT
      ){
-       callback(tx)
+       let txHash = tx.transactionId.split("-")[0]
+       if (!alreadyProcessed.includes(txHash)){
+         alreadyProcessed.push(txHash)
+         callback(tx)
+       }
      }
    });
  } catch (e) {

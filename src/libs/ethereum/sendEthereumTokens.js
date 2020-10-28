@@ -24,13 +24,13 @@ async function start(depositAmount, address, sender){
     let rawTransaction = {
       "from": process.env.ETHEREUM_ADDRESS,
       "nonce": "0x" + nonce.toString(16),
-      "gasPrice": web3.utils.toHex(gasPriceGwei * 1e9),
+      "gasPrice": web3.utils.toHex(gasPrice * 1e9),
       "gasLimit": web3.utils.toHex(process.env.ETHEREUM_GAS_LIMIT),
-      "to": address,
+      "to": process.env.ETHEREUM_CONTRACT_ADDRESS,
       "data": contractFunction,
       "chainId": process.env.ETHEREUM_CHAIN_ID
     };
-    let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN_IDn });
+    let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN });
     tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
     let serializedTx = tx.serialize();
     let receipt = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
@@ -51,16 +51,16 @@ async function start(depositAmount, address, sender){
   }
 }
 
-async function sendFeeRefund(amount, sennder){
+async function sendFeeRefund(amount, sender){
   let json = {
     contractName: "tokens", contractAction: "transfer", contractPayload: {
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
-      quantity: amount,
+      quantity: amount.toString(),
       memo: `Refund of over-estimated transaction fees: ${amount} ${process.env.TOKEN_SYMBOL}`
     }
   }
-  let transaction = await hive.customJson('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY);
+  let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
 }
 
 async function sendDepositConfirmation(transactionHash, sender){
@@ -68,11 +68,11 @@ async function sendDepositConfirmation(transactionHash, sender){
     contractName: "tokens", contractAction: "transfer", contractPayload: {
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
-      quantity: Math.pow(10, -(process.env.HIVE_TOKEN_PRECISION)),
+      quantity: Math.pow(10, -(process.env.HIVE_TOKEN_PRECISION)).toString(),
       memo: `Wrapped tokens sent! Transaction Hash: ${transactionHash}`
     }
   }
-  let transaction = await hive.customJson('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY);
+  let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
 }
 
 async function refundFailedTransaction(depositAmount, sender){
@@ -80,11 +80,11 @@ async function refundFailedTransaction(depositAmount, sender){
     contractName: "tokens", contractAction: "transfer", contractPayload: {
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
-      quantity: depositAmount,
+      quantity: depositAmount.toString(),
       memo: `Refund! Internal server error while processing your request.`
     }
   }
-  let transaction = await hive.customJson('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY);
+  let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
 }
 
 function getRecomendedGasPrice(){
@@ -106,7 +106,7 @@ async function caculateTransactionFee(contract, address, amount, gasPrice){
   return new Promise(async (resolve, reject) => {
     let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount);
     let estimatedGas = await contractFunction.estimateGas({ from: process.env.ETHEREUM_ADDRESS });
-    let wei = estimatedGas * gasPrice * 1000000000
+    let wei = parseFloat(estimatedGas * gasPrice * 1000000000).toFixed(0)
     let etherValue = Web3.utils.fromWei(wei.toString(), 'ether');
     resolve({
       etherValue: etherValue,

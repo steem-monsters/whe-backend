@@ -12,23 +12,25 @@ function start(tx){
     try {
       let { transactionId, sender, contract, action, payload, logs } = tx
       payload = JSON.parse(payload)
-      if (payload.quantity >= process.env.MIN_AMOUNT &&
-          payload.quantity <= process.env.MAX_AMOUNT &&
+      if (Number(payload.quantity) >= process.env.MIN_AMOUNT &&
+          Number(payload.quantity) <= process.env.MAX_AMOUNT &&
           web3.utils.isAddress(payload.memo) &&
           !isAlreadyProcessed.includes(transactionId)
       ){
         resolve(`valid_deposit`)
       } else {
-        let json = {
-          contractName: "tokens", contractAction: "transfer", contractPayload: {
-            symbol: process.env.TOKEN_SYMBOL,
-            to: sender,
-            quantity: payload.quantity,
-            memo: `Refund! Are you sure the amount is between ${process.env.MIN_AMOUNT} and ${process.env.MAX_AMOUNT} and memo is valid Ethereum address?`
+        if (!isAlreadyProcessed.includes(transactionId)){
+          let json = {
+            contractName: "tokens", contractAction: "transfer", contractPayload: {
+              symbol: process.env.TOKEN_SYMBOL,
+              to: sender,
+              quantity: payload.quantity,
+              memo: `Refund! Are you sure the amount is between ${process.env.MIN_AMOUNT} and ${process.env.MAX_AMOUNT} and memo is valid Ethereum address?`
+            }
           }
+          let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
+          resolve(`deposit_refunded`)
         }
-        let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
-        resolve(`deposit_refunded`)
       }
     } catch (e){
       console.log(e)

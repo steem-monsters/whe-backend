@@ -1,6 +1,7 @@
 require('dotenv').config();
 const assert = require('assert');
 const level = require("level")
+const schedule = require('node-schedule')
 
 const database = level("./database")
 
@@ -20,7 +21,7 @@ assert(!process.env.HIVE_ACCOUNT.includes("@"), "HIVE_ACCOUNT should not include
 assert(process.env.PERCENTAGE_DEPOSIT_FEE > 0, "PERCENTAGE_DEPOSIT_FEE must be more than 0")
 assert(process.env.HIVE_TOKEN_PRECISION >= 0, "HIVE_TOKEN_PRECISION must be more or equal to 0")
 assert(process.env.ETHEREUM_TOKEN_PRECISION > 0, "ETHEREUM_TOKEN_PRECISION must be more than 0")
-assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTRACT_FUNCTION must be more transfer or mint")
+assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTRACT_FUNCTION must be transfer or mint")
 
 async function main(){
   console.log("-".repeat(process.stdout.columns))
@@ -32,7 +33,7 @@ async function main(){
     processHiveEngineDeposit.start(tx)
       .then(async (result) => {
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
-        if (result == 'valid_deposit') {
+        else if (result == 'valid_deposit') {
           let payload = JSON.parse(tx.payload)
           sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
         }
@@ -40,11 +41,14 @@ async function main(){
       .catch(err => console.log(err))
   })
 
-  scanEthereumTransactions.start(database, (tx) => {
-    processEthereumTransaction.start(tx)
-      .then((result) => {
-        processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
-      })
+  ///check for new deposits every minute
+  schedule.scheduleJob('* * * * *', () => {
+    scanEthereumTransactions.start(database, (tx) => {
+      processEthereumTransaction.start(tx)
+        .then((result) => {
+          processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
+        })
+    })
   })
 }
 
