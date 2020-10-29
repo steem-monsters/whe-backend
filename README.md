@@ -24,7 +24,11 @@ If you use mintable tokens, you should use `convertTokenWithBurn`, if you have f
 
 For more info about contract, visit https://github.com/fbslo/whe-contract
 
+---
 
+Installation:
+
+For automatic installation, use https://github.com/fbslo/whe-installer
 
 ---
 
