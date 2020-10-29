@@ -69,7 +69,7 @@ async function sendDepositConfirmation(transactionHash, sender){
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
       quantity: Math.pow(10, -(process.env.HIVE_TOKEN_PRECISION)).toString(),
-      memo: `Wrapped tokens sent! Transaction Hash: ${transactionHash}`
+      memo: `Wrapped ${process.env.TOKEN_SYMBOL} tokens sent! Transaction Hash: ${transactionHash}`
     }
   }
   let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);

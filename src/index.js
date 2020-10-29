@@ -41,7 +41,7 @@ async function main(){
       .catch(err => console.log(err))
   })
 
-  ///check for new deposits every minute
+  //check for new deposits every minute
   schedule.scheduleJob('* * * * *', () => {
     scanEthereumTransactions.start(database, (tx) => {
       processEthereumTransaction.start(tx)
