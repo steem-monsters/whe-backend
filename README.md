@@ -16,13 +16,15 @@ User transfers tokens to @deposit-account with ethereum address as memo. On Ethe
 
 ***Withdrawals***: conversion from ERC20 tokens on Ethereum to Hive Engine tokens on Hive
 
-User calls function in tokens smart contract. Both functions accept `amount`, `username` (in this order).
+User calls function in tokens smart contract. Both functions accept `amount`, `username` (in this order). It will emit `convertToken` event that is detected by oracle app.
 
 function: `convertTokenWithBurn` or `convertTokenWithTransfer`
 
 If you use mintable tokens, you should use `convertTokenWithBurn`, if you have fixed supply token, use `convertTokenWithTransfer` (it will transfer tokens back to hardcoded address)
 
 For more info about contract, visit https://github.com/fbslo/whe-contract
+
+
 
 ---
 
