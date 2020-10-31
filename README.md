@@ -22,7 +22,7 @@ function: `convertTokenWithBurn` or `convertTokenWithTransfer`
 
 If you use mintable tokens, you should use `convertTokenWithBurn`, if you have fixed supply token, use `convertTokenWithTransfer` (it will transfer tokens back to hardcoded address)
 
-For more info about contract, visit https://github.com/fbslo/whe-contract
+For more info about contract, visit https://github.com/fbslo/wToken-contract
 
 ---
 
