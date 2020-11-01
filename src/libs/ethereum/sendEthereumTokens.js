@@ -43,9 +43,9 @@ async function start(depositAmount, address, sender){
     }
   } catch(e){
     if ((e).toString().includes("Transaction was not mined within 750 seconds")){
-      console.log(`Error NOT refunded: `, e)
+      console.log(`Error (not minted within 750 seconds) NOT refunded:`, e)
     } else {
-      console.log(e)
+      console.log(`Error while sending ERC-20 token, refunded:`, e)
       refundFailedTransaction(depositAmount, sender)
     }
   }

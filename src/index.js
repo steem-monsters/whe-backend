@@ -2,9 +2,11 @@ require('dotenv').config();
 const assert = require('assert');
 const level = require("level")
 const schedule = require('node-schedule')
+const winston = require('winston');
 
 const database = level("./database")
 
+const isFirstSetup = require("./libs/setup/isFirstSetup.js")
 const setupDatabase = require("./libs/setup/setupDatabase.js")
 
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
@@ -13,6 +15,13 @@ const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.j
 const scanEthereumTransactions = require("./libs/ethereum/scanEthereumTransactions.js")
 const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
 const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
+
+const logger = winston.createLogger({
+    level: 'error',
+    transports: [
+      new (winston.transports.File)({ filename: 'error.log' })
+    ]
+  })
 
 const methods = ["mint", "transfer"]
 assert(process.env.TOKEN_SYMBOL.length > 1, "TOKEN_SYMBOL length must be more than 1")
@@ -38,7 +47,10 @@ async function main(){
           sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
         }
       })
-      .catch(err => console.log(err))
+      .catch((err) => {
+        console.log(`[!] Error while processing HE deposit:`, err)
+        logger.log('error', `Error while processing HE deposit: ${err}`)
+      })
   })
 
   //check for new deposits every minute
@@ -48,8 +60,20 @@ async function main(){
         .then((result) => {
           processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
         })
+        .catch((err) => {
+          console.log(`[!] Error while processing Ethereum transaction:`, err)
+          logger.log('error', `Error while processing Ethereum transaction: ${err}`)
+        })
     })
   })
 }
 
-main()
+isFirstSetup.check(database) 
+  .then(async (result) => {
+    if (result == true) {
+      await setupDatabase.initialSetup(database)
+      main()
+    } else {
+      main()
+    }
+  })
