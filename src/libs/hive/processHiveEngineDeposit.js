@@ -15,7 +15,8 @@ function start(tx){
       if (Number(payload.quantity) >= process.env.MIN_AMOUNT &&
           Number(payload.quantity) <= process.env.MAX_AMOUNT &&
           web3.utils.isAddress(payload.memo) &&
-          !isAlreadyProcessed.includes(transactionId)
+          !isAlreadyProcessed.includes(transactionId) &&
+          !logs.includes("error")
       ){
         resolve(`valid_deposit`)
       } else {
