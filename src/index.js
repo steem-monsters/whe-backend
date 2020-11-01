@@ -44,7 +44,7 @@ async function main(){
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         else if (result == 'valid_deposit') {
           let payload = JSON.parse(tx.payload)
-          sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender)
+          sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender, logger)
         }
       })
       .catch((err) => {
@@ -68,7 +68,7 @@ async function main(){
   })
 }
 
-isFirstSetup.check(database) 
+isFirstSetup.check(database)
   .then(async (result) => {
     if (result == true) {
       await setupDatabase.initialSetup(database)

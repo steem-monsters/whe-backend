@@ -9,7 +9,7 @@ const hive = new Hive({rpc_error_limit: 5}, {rpc_nodes: process.env.HIVE_RPC_NOD
 const tokenABI = require("./tokenABI.js");
 const hiveEngineTokenPrice = require("../market/hiveEngineTokenPrice.js")
 
-async function start(depositAmount, address, sender){
+async function start(depositAmount, address, sender, logger){
   try {
     let gasPrice = await getRecomendedGasPrice()
     let amount = depositAmount * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION); //remove decimal places => 0.001, 3 decimal places => 0.001 * 1000 = 1
@@ -42,10 +42,18 @@ async function start(depositAmount, address, sender){
       sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
     }
   } catch(e){
+    let details  = {
+      depositAmount: depositAmount,
+      address: address,
+      sender: sender,
+      time: new Date()
+    }
     if ((e).toString().includes("Transaction was not mined within 750 seconds")){
-      console.log(`Error (not minted within 750 seconds) NOT refunded:`, e)
+      console.log(`Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${details}`)
+      logger.log('error', `Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${details}`)
     } else {
-      console.log(`Error while sending ERC-20 token, refunded:`, e)
+      console.log(`Error while sending ERC-20 token, refunded: ${e}, details: ${details}`)
+      logger.log('error', `Error while sending ERC-20 token, refunded: ${e}, details: ${details}`)
       refundFailedTransaction(depositAmount, sender)
     }
   }
