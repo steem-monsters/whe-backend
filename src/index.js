@@ -32,6 +32,8 @@ assert(process.env.HIVE_TOKEN_PRECISION >= 0, "HIVE_TOKEN_PRECISION must be more
 assert(process.env.ETHEREUM_TOKEN_PRECISION > 0, "ETHEREUM_TOKEN_PRECISION must be more than 0")
 assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTRACT_FUNCTION must be transfer or mint")
 
+const alreadyProcessed = []
+
 async function main(){
   console.log("-".repeat(process.stdout.columns))
   console.log(`Wrapped Hive Engine Orace\nCopyright: @fbslo, 2020\n`)
@@ -58,7 +60,10 @@ async function main(){
     scanEthereumTransactions.start(database, (tx) => {
       processEthereumTransaction.start(tx)
         .then((result) => {
-          processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
+          if (!alreadyProcessed.includes(result.hash)){
+            alreadyProcessed.push(result.hash) //prevent double spend
+            processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
+          }
         })
         .catch((err) => {
           console.log(`[!] Error while processing Ethereum transaction:`, err)

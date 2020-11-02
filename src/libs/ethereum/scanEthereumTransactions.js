@@ -4,15 +4,13 @@ const tokenABI = require("./tokenABI.js");
 const web3 = new Web3(process.env.ETHEREUM_ENDPOINT);
 
 let processedTransactions = []
-let notProcessedYet = []
 
 async function start(database, callback){
   getERC20TransactionsByEvent(database, process.env.ETHEREUM_CONTRACT_ADDRESS)
     .then(async (result) => {
       for (i in result){
-        let isInTheDatabase = await isAlreadyInTheDatabase(result[i].transactionHash)
-        if (!processedTransactions.includes(result[i].transactionHash) || !isInTheDatabase){
-          callback(result[i]) //return new transaction
+        let isInTheDatabase = await isAlreadyInTheDatabase(result[i].transactionHash, database)
+        if (!processedTransactions.includes(result[i].transactionHash) && !isInTheDatabase){
           processedTransactions.push(result[i].transactionHash)
           let json = JSON.stringify({
             status: true,
@@ -24,7 +22,8 @@ async function start(database, callback){
             }
           })
           await database.put(result[i].transactionHash, json)
-        }
+          callback(result[i]) //return new transaction
+        } 
       }
       updateListOfTransactions(database, result)
     })
@@ -56,13 +55,16 @@ async function updateListOfTransactions(database, result){
   await database.put("all_ethereum_transactions", JSON.stringify(allEthereumTransactonsJson))
 }
 
-async function isAlreadyInTheDatabase(hash){
-  try {
-    await database.get(result[i].transactionHash)
-    return true;
-  } catch (e){
-    if (e.name == 'NotFoundError') return false;
-  }
+async function isAlreadyInTheDatabase(hash, database){
+  return new Promise(async (resolve, reject) => {
+    try {
+      await database.get(hash)
+      resolve(true);
+    } catch (e){
+      if (e.name == 'NotFoundError') resolve(false);
+      else console.log(e)
+    }
+  })
 }
 
 module.exports.start = start
