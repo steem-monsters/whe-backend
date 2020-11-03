@@ -77,24 +77,29 @@ function getSecondaryNodeInformation(transactionId, tx){
   })
 }
 
-async function checkMempool(){
-  return new Promise((resolve, reject) => {
-    low(adapter)
-      .then(async db => {
-        try {
-          db.defaults({ transactions: [] }).write()
-          let mempool = db.get("transactions").value()
-          for (i in mempool){
-            let isValid = await getSecondaryNodeInformation(mempool[i].id)
-            if (isValid == "transaction_valid"){
-              resolve(mempool[i].id)
-            }
+async function checkMempool(callback){
+  low(adapter)
+    .then(async db => {
+      try {
+        db.defaults({ transactions: [] }).write()
+        let mempool = db.get("transactions").value()
+        if (mempool.length == 0) callback({ error: false, data: "mempool_empty" })
+        for (i in mempool){
+          let isValid = await getSecondaryNodeInformation(mempool[i].id)
+          if (isValid == "transaction_valid"){
+            callback({
+              error: false,
+              data: mempool[i]
+            })
           }
-        } catch (e) {
-          reject(e)
         }
-      })
-  })
+      } catch (e) {
+        callback({
+          error: true,
+          data: e
+        })
+      }
+    })
 }
 
 module.exports.start = start
