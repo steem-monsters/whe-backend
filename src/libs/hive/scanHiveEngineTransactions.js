@@ -87,11 +87,16 @@ async function checkMempool(callback){
         for (i in mempool){
           let isValid = await getSecondaryNodeInformation(mempool[i].id)
           if (isValid == "transaction_valid"){
+            db.get('transactions') //remove tx from mempool
+              .remove({ id: mempool[i].id })
+              .write()
+
             callback({
               error: false,
               data: mempool[i]
             })
           }
+          await sleep(10000) //prevent overloading eth tarnsactions and possible nonce complications
         }
       } catch (e) {
         callback({
@@ -100,6 +105,12 @@ async function checkMempool(callback){
         })
       }
     })
+}
+
+function sleep(ms){
+  return new Promise((resolve, reject) => {
+    setTimeout(() => { resolve() }, ms)
+  })
 }
 
 module.exports.start = start
