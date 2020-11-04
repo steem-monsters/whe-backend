@@ -27,9 +27,9 @@ const methods = ["mint", "transfer"]
 assert(process.env.TOKEN_SYMBOL.length > 1, "TOKEN_SYMBOL length must be more than 1")
 assert(process.env.HIVE_ACCOUNT.length > 1, "HIVE_ACCOUNT length must be more than 1")
 assert(!process.env.HIVE_ACCOUNT.includes("@"), "HIVE_ACCOUNT should not include @")
-assert(process.env.PERCENTAGE_DEPOSIT_FEE > 0, "PERCENTAGE_DEPOSIT_FEE must be more than 0")
+assert(process.env.PERCENTAGE_DEPOSIT_FEE >= 0, "PERCENTAGE_DEPOSIT_FEE must be more or equal to 0")
 assert(process.env.HIVE_TOKEN_PRECISION >= 0, "HIVE_TOKEN_PRECISION must be more or equal to 0")
-assert(process.env.ETHEREUM_TOKEN_PRECISION > 0, "ETHEREUM_TOKEN_PRECISION must be more than 0")
+assert(process.env.ETHEREUM_TOKEN_PRECISION >= 0, "ETHEREUM_TOKEN_PRECISION must be more or equal to 0")
 assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTRACT_FUNCTION must be transfer or mint")
 
 const alreadyProcessed = []
@@ -86,7 +86,7 @@ async function main(){
         console.log(`[!] Error while processing hive mempool:`, result.data)
         logger.log('error', `Error while processing hive mempool: ${result.data}`)
       }
-    }
+    })
   })
 
 }

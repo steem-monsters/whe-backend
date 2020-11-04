@@ -21,7 +21,7 @@ function start(callback){
        let txHash = tx.transactionId.split("-")[0]
        if (!alreadyProcessed.includes(txHash)){
          alreadyProcessed.push(txHash)
-         if (process.env.VERIFY_SECONDARY_NODE){
+         if (process.env.VERIFY_SECONDARY_NODE == 'true'){
            let isTransactionValid = getSecondaryNodeInformation(transactionId, tx)
            if (isTransactionValid == 'transaction_valid') callback(tx)
          } else {

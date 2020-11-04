@@ -2,3 +2,6 @@ node_modules/
 .env
 database/
 state_he.json
+.log
+error.log
+dev_logs/

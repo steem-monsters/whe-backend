@@ -19,42 +19,47 @@ async function start(depositAmount, address, sender, logger){
     let hiveEngineTokenPriceInEther = await hiveEngineTokenPrice.start(); //get HE token price in ETH
     let estimatedGasFee = await caculateTransactionFee(contract, address, amount, gasPrice); //get estimated ETH used
     let estimatedTransactionFeeInHETokens = parseFloat(estimatedGasFee.etherValue / hiveEngineTokenPriceInEther * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)).toFixed(0)
-    amount = amount - estimatedTransactionFeeInHETokens
-    let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount).encodeABI(); //either mint() or transfer() tokens
-    let rawTransaction = {
-      "from": process.env.ETHEREUM_ADDRESS,
-      "nonce": "0x" + nonce.toString(16),
-      "gasPrice": web3.utils.toHex(gasPrice * 1e9),
-      "gasLimit": web3.utils.toHex(process.env.ETHEREUM_GAS_LIMIT),
-      "to": process.env.ETHEREUM_CONTRACT_ADDRESS,
-      "data": contractFunction,
-      "chainId": process.env.ETHEREUM_CHAIN_ID
-    };
-    let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN });
-    tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
-    let serializedTx = tx.serialize();
-    let receipt = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
-    let { transactionHash, gasUsed, status } = receipt
-    sendDepositConfirmation(transactionHash, sender)
-    if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
-      let spendTransactionFeeInHETokens = parseFloat(gasUsed / hiveEngineTokenPriceInEther).toFixed(process.env.HIVE_TOKEN_PRECISION)
-      let extraFeeRefund = (estimatedTransactionFeeInHETokens / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)) - spendTransactionFeeInHETokens
-      sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
+    amount = parseFloat(amount - estimatedTransactionFeeInHETokens).toFixed(0)
+    if (amount <= 0){ //if amount is less than 0, refund
+      refundFailedTransaction(depositAmount, sender, 'Amount after fees is less or equal to 0.')
+    } else {
+      let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount).encodeABI(); //either mint() or transfer() tokens
+      let rawTransaction = {
+        "from": process.env.ETHEREUM_ADDRESS,
+        "nonce": "0x" + nonce.toString(16),
+        "gasPrice": web3.utils.toHex(gasPrice * 1e9),
+        "gasLimit": web3.utils.toHex(process.env.ETHEREUM_GAS_LIMIT),
+        "to": process.env.ETHEREUM_CONTRACT_ADDRESS,
+        "data": contractFunction,
+        "chainId": process.env.ETHEREUM_CHAIN_ID
+      };
+      let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN });
+      tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
+      let serializedTx = tx.serialize();
+      let receipt = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
+      let { transactionHash, gasUsed, status } = receipt
+      sendDepositConfirmation(transactionHash, sender)
+      if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
+        let spendTransactionFeeInHETokens = parseFloat(gasUsed / hiveEngineTokenPriceInEther).toFixed(process.env.HIVE_TOKEN_PRECISION)
+        let extraFeeRefund = (estimatedTransactionFeeInHETokens / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)) - spendTransactionFeeInHETokens
+        sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
+      }
     }
   } catch(e){
     let details  = {
       depositAmount: depositAmount,
       address: address,
       sender: sender,
-      time: new Date()
+      time: new Date(),
+      current_fee: estimatedTransactionFeeInHETokens
     }
     if ((e).toString().includes("Transaction was not mined within 750 seconds")){
-      console.log(`Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${details}`)
-      logger.log('error', `Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${details}`)
+      console.log(`Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${JSON.stringify(details)}`)
+      logger.log('error', `Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${JSON.stringify(details)}`)
     } else {
-      console.log(`Error while sending ERC-20 token, refunded: ${e}, details: ${details}`)
-      logger.log('error', `Error while sending ERC-20 token, refunded: ${e}, details: ${details}`)
-      refundFailedTransaction(depositAmount, sender)
+      console.log(`Error while sending ERC-20 token, refunded: ${e}, details: ${JSON.stringify(details)}`)
+      logger.log('error', `Error while sending ERC-20 token, refunded: ${e}, details: ${JSON.stringify(details)}`)
+      refundFailedTransaction(depositAmount, sender, 'Internal server error while processing your request')
     }
   }
 }
@@ -83,13 +88,13 @@ async function sendDepositConfirmation(transactionHash, sender){
   let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
 }
 
-async function refundFailedTransaction(depositAmount, sender){
+async function refundFailedTransaction(depositAmount, sender, message){
   let json = {
     contractName: "tokens", contractAction: "transfer", contractPayload: {
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
       quantity: depositAmount.toString(),
-      memo: `Refund! Internal server error while processing your request.`
+      memo: `Refund! ${message}.`
     }
   }
   let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
