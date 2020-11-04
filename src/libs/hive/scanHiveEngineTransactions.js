@@ -96,7 +96,7 @@ async function checkMempool(callback){
               data: mempool[i]
             })
           }
-          await sleep(10000) //prevent overloading eth tarnsactions and possible nonce complications
+          await sleep(5000) //prevent overloading eth transaactions and possible nonce complications
         }
       } catch (e) {
         callback({

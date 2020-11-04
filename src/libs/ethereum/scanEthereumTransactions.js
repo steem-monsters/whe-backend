@@ -1,15 +1,19 @@
 const Web3 = require("web3")
 
+const low = require('lowdb')
+const FileAsync = require('lowdb/adapters/FileAsync')
+const adapter = new FileAsync('./ethereumTransactions.json')
+
 const tokenABI = require("./tokenABI.js");
 const web3 = new Web3(process.env.ETHEREUM_ENDPOINT);
 
 let processedTransactions = []
 
-async function start(database, callback){
-  getERC20TransactionsByEvent(database, process.env.ETHEREUM_CONTRACT_ADDRESS)
+async function start(callback){
+  getERC20TransactionsByEvent(process.env.ETHEREUM_CONTRACT_ADDRESS)
     .then(async (result) => {
       for (i in result){
-        let isInTheDatabase = await isAlreadyInTheDatabase(result[i].transactionHash, database)
+        let isInTheDatabase = await isAlreadyInTheDatabase(result[i].transactionHash)
         if (!processedTransactions.includes(result[i].transactionHash) && !isInTheDatabase){
           processedTransactions.push(result[i].transactionHash)
           let json = JSON.stringify({
@@ -21,11 +25,10 @@ async function start(database, callback){
               amount: result[i].returnValues.amount / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)
             }
           })
-          await database.put(result[i].transactionHash, json)
+          low(adapter).then(db => { db.defaults({ transactions: [], block: 0 }).write(); db.get("transactions").push({ id: result[i].transactionHash }) })
           callback(result[i]) //return new transaction
-        } 
+        }
       }
-      updateListOfTransactions(database, result)
     })
     .catch((err) => {
       console.log(err)
@@ -35,35 +38,36 @@ async function start(database, callback){
 async function getERC20TransactionsByEvent(database, tokenContractAddress) {
   return new Promise(async (resolve, reject) => {
     let currentBlockNumber = await web3.eth.getBlockNumber();
-    let lastProcessedBlock = await database.get("last_eth_block")
+    let lastProcessedBlock = await getLastProcesedBlock()
     let fromBlock = lastProcessedBlock - 500; //add some extra blocks so we don't miss any tx
     let toBlock = currentBlockNumber - 12 //wait 12 confirmations
     let contract = new web3.eth.Contract(tokenABI.ABI, tokenContractAddress);
     let pastEvents = await contract.getPastEvents("convertToken", {}, { fromBlock: fromBlock, toBlock: toBlock })
-    await database.put("last_eth_block", toBlock - 50)
+    db.update('block', toBlock).write()
     resolve(pastEvents)
   })
 }
 
-async function updateListOfTransactions(database, result){
-  //store new tx's to list {transactionHash: true...}
-  let allEthereumTransactons = await database.get("all_ethereum_transactions")
-  let allEthereumTransactonsJson = JSON.parse(allEthereumTransactons)
-  for (i in result){
-    allEthereumTransactonsJson[result[i].transactionHash] = true
-  }
-  await database.put("all_ethereum_transactions", JSON.stringify(allEthereumTransactonsJson))
+async function isAlreadyInTheDatabase(hash){
+  return new Promise(async (resolve, reject) => {
+    low(adapter).then(db => {
+      db.defaults({ transactions: [] }).write();
+      let transaction = db.get("transactions")
+      .find({ id: hash })
+      .value()
+      if (tranaction == undefined) resolve(false)
+      else resolve (true)
+    })
+  })
 }
 
-async function isAlreadyInTheDatabase(hash, database){
+function getLastProcesedBlock(){
   return new Promise(async (resolve, reject) => {
-    try {
-      await database.get(hash)
-      resolve(true);
-    } catch (e){
-      if (e.name == 'NotFoundError') resolve(false);
-      else console.log(e)
-    }
+    low(adapter).then(db => {
+      db.defaults({ transactions: [], block: 0 }).write();
+      let transaction = db.get("block").value()
+      resolve(transaction)
+    })
   })
 }
 

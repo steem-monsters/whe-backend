@@ -1,13 +1,7 @@
 require('dotenv').config();
 const assert = require('assert');
-const level = require("level")
 const schedule = require('node-schedule')
 const winston = require('winston');
-
-const database = level("./database")
-
-const isFirstSetup = require("./libs/setup/isFirstSetup.js")
-const setupDatabase = require("./libs/setup/setupDatabase.js")
 
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
 const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
@@ -45,6 +39,7 @@ async function main(){
       .then(async (result) => {
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         else if (result == 'valid_deposit') {
+          console.log(`New HE deposit detected! ${payload.quantity} ${process.env.TOKEN_SYMBOL} sent by ${tx.sender}`)
           let payload = JSON.parse(tx.payload)
           sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender, logger)
         }
@@ -57,7 +52,7 @@ async function main(){
 
   //check for new deposits every minute
   schedule.scheduleJob('* * * * *', () => {
-    scanEthereumTransactions.start(database, (tx) => {
+    scanEthereumTransactions.start((tx) => {
       processEthereumTransaction.start(tx)
         .then((result) => {
           if (!alreadyProcessed.includes(result.hash)){
@@ -91,12 +86,4 @@ async function main(){
 
 }
 
-isFirstSetup.check(database)
-  .then(async (result) => {
-    if (result == true) {
-      await setupDatabase.initialSetup(database)
-      main()
-    } else {
-      main()
-    }
-  })
+main()
