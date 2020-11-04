@@ -4,7 +4,7 @@ const hive_engine = new HiveEngine();
 const axios = require('axios');
 const low = require('lowdb')
 const FileAsync = require('lowdb/adapters/FileAsync')
-const adapter = new FileAsync('./mempool.json')
+const adapter = new FileAsync('./database/database.json')
 
 let alreadyProcessed = []
 
@@ -50,20 +50,15 @@ function getSecondaryNodeInformation(transactionId, tx){
     .then(function (response) {
       if (response == null || response.data == null || response.data.result == null) {
         //add transaction to mempool
-        low(adapter)
-          .then(db => {
-            db.defaults({ transactions: [] }).write()
-
-            let isAlreadyInMemPool = db.get("transactions").find({ id: transactionId }).value()
-            if (isAlreadyInMemPool.length == 0){
-              db.get('transactions')
-                .push({ id: transactionId, tx: tx })
-                .write()
-              resolve("added_to_mempool")
-            } else {
-              resolve("already_in_mempool")
-            }
-          })
+        let isAlreadyInMemPool = db.get("mempool").find({ id: transactionId }).value()
+        if (isAlreadyInMemPool.length == 0){
+          db.get('mempool')
+            .push({ id: transactionId, tx: tx })
+            .write()
+          resolve("added_to_mempool")
+        } else {
+          resolve("already_in_mempool")
+        }
       }
       else if (!response.data.result.logs.includes("errors")){
         resolve("transaction_valid")
@@ -78,33 +73,29 @@ function getSecondaryNodeInformation(transactionId, tx){
 }
 
 async function checkMempool(callback){
-  low(adapter)
-    .then(async db => {
-      try {
-        db.defaults({ transactions: [] }).write()
-        let mempool = db.get("transactions").value()
-        if (mempool.length == 0) callback({ error: false, data: "mempool_empty" })
-        for (i in mempool){
-          let isValid = await getSecondaryNodeInformation(mempool[i].id)
-          if (isValid == "transaction_valid"){
-            db.get('transactions') //remove tx from mempool
-              .remove({ id: mempool[i].id })
-              .write()
+  try {
+    let mempool = db.get("mempool").value()
+    if (mempool.length == 0) callback({ error: false, data: "mempool_empty" })
+    for (i in mempool){
+      let isValid = await getSecondaryNodeInformation(mempool[i].id)
+      if (isValid == "transaction_valid"){
+        db.get('mempool') //remove tx from mempool
+          .remove({ id: mempool[i].id })
+          .write()
 
-            callback({
-              error: false,
-              data: mempool[i]
-            })
-          }
-          await sleep(5000) //prevent overloading eth transaactions and possible nonce complications
-        }
-      } catch (e) {
         callback({
-          error: true,
-          data: e
+          error: false,
+          data: mempool[i]
         })
       }
+      await sleep(5000) //prevent overloading eth transaactions and possible nonce complications
+    }
+  } catch (e) {
+    callback({
+      error: true,
+      data: e
     })
+  }
 }
 
 function sleep(ms){

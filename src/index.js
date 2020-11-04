@@ -3,6 +3,10 @@ const assert = require('assert');
 const schedule = require('node-schedule')
 const winston = require('winston');
 
+const low = require('lowdb')
+const FileAsync = require('lowdb/adapters/FileAsync')
+const adapter = new FileAsync('./src/database/database.json')
+
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
 const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
 
@@ -28,7 +32,7 @@ assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTR
 
 const alreadyProcessed = []
 
-async function main(){
+async function main(db){
   console.log("-".repeat(process.stdout.columns))
   console.log(`Wrapped Hive Engine Orace\nCopyright: @fbslo, 2020\n`)
   console.log(`Token Symbol: ${process.env.TOKEN_SYMBOL}\nHive account: ${process.env.HIVE_ACCOUNT}\nEthereum contract: ${process.env.ETHEREUM_CONTRACT_ADDRESS}`)
@@ -52,7 +56,7 @@ async function main(){
 
   //check for new deposits every minute
   schedule.scheduleJob('* * * * *', () => {
-    scanEthereumTransactions.start((tx) => {
+    scanEthereumTransactions.start(db, (tx) => {
       processEthereumTransaction.start(tx)
         .then((result) => {
           if (!alreadyProcessed.includes(result.hash)){
@@ -83,7 +87,10 @@ async function main(){
       }
     })
   })
-
 }
 
-main()
+low(adapter)
+  .then(db => {
+    db.defaults({ ethereum_transactions: [], hive_transactions: [], mempool: [], last_eth_block: 0 }).write()
+    main(db)
+  })
