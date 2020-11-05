@@ -56,7 +56,7 @@ async function main(db){
 
   //check for new ERC20 deposits every minute
   schedule.scheduleJob('* * * * *', () => {
-    scanEthereumTransactions.start(db, (tx) => {
+    scanEthereumTransactions.start((tx) => {
       processEthereumTransaction.start(tx)
         .then((result) => {
           if (!alreadyProcessed.includes(result.hash)){

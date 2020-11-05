@@ -1,5 +1,5 @@
 const sendEthereumTokens = require("../ethereum/sendEthereumTokens.js")
-const hiveEngine = require("./libs/hive/scanHiveEngineTransactions.js");
+const hiveEngine = require("./scanHiveEngineTransactions.js");
 
 const mongo = require("../../mongo.js")
 const database = mongo.get().db("oracle")

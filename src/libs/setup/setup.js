@@ -38,7 +38,7 @@ function updateState(){
 }
 
 function updateLastBlock(){
-  database.collection("status").inertOne({ type: "last_eth_block", block: 0 }, { upsert: true }, (err, result) => {
+  database.collection("status").insertOne({ type: "last_eth_block", block: 0 }, { upsert: true }, (err, result) => {
     if (err) reject(err)
   })
 }
