@@ -9,6 +9,7 @@ const adapter = new FileAsync('./src/database/database.json')
 
 const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
 const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
+const mempool = require("./libs/hive/mempool.js")
 
 const scanEthereumTransactions = require("./libs/ethereum/scanEthereumTransactions.js")
 const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
@@ -71,22 +72,10 @@ async function main(db){
     })
   })
 
-  //check mempool every minute, if secondary node is enabled
-  schedule.scheduleJob('* * * * *', () => {
-    hiveEngineDeposits.checkMempool((result) => {
-      if (result.error != true && result.data != 'mempool_empty'){
-        let txHash = result.data.transactionId.split("-")[0]
-        if (!alreadyProcessed.includes(result.data.txHash)){
-          alreadyProcessed.push(result.data.txHash) //prevent double spend
-          let payload = JSON.parse(result.data.payload)
-          sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender, logger)
-        }
-      } else if (result.error == true){
-        console.log(`[!] Error while processing hive mempool:`, result.data)
-        logger.log('error', `Error while processing hive mempool: ${result.data}`)
-      }
-    })
-  })
+  //highly experimental, dodn't use in production yet
+  if (process.env.VERIFY_SECONDARY_NODE == 'true'){
+    mempool.start(db, logger)
+  }
 }
 
 low(adapter)

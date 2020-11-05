@@ -72,7 +72,7 @@ function getSecondaryNodeInformation(transactionId, tx){
   })
 }
 
-async function checkMempool(callback){
+async function checkMempool(callback, db){
   try {
     let mempool = db.get("mempool").value()
     if (mempool.length == 0) callback({ error: false, data: "mempool_empty" })
