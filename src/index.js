@@ -3,17 +3,7 @@ const assert = require('assert');
 const schedule = require('node-schedule')
 const winston = require('winston');
 
-const low = require('lowdb')
-const FileAsync = require('lowdb/adapters/FileAsync')
-const adapter = new FileAsync('./src/database/database.json')
-
-const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
-const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
-const mempool = require("./libs/hive/mempool.js")
-
-const scanEthereumTransactions = require("./libs/ethereum/scanEthereumTransactions.js")
-const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
-const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
+const database = require("./mongo.js")
 
 const logger = winston.createLogger({
     level: 'error',
@@ -34,13 +24,22 @@ assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTR
 const alreadyProcessed = []
 
 async function main(db){
+  const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
+  const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
+  const mempool = require("./libs/hive/mempool.js")
+
+  const scanEthereumTransactions = require("./libs/ethereum/scanEthereumTransactions.js")
+  const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
+  const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
+
   console.log("-".repeat(process.stdout.columns))
   console.log(`Wrapped Hive Engine Orace\nCopyright: @fbslo, 2020\n`)
   console.log(`Token Symbol: ${process.env.TOKEN_SYMBOL}\nHive account: ${process.env.HIVE_ACCOUNT}\nEthereum contract: ${process.env.ETHEREUM_CONTRACT_ADDRESS}`)
   console.log("-".repeat(process.stdout.columns))
 
+  //track new HE transactions
   hiveEngineDeposits.start((tx) => {
-    processHiveEngineDeposit.start(tx)
+    processHiveEngineDeposit.start(tx, db)
       .then(async (result) => {
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         else if (result == 'valid_deposit') {
@@ -55,7 +54,7 @@ async function main(db){
       })
   })
 
-  //check for new deposits every minute
+  //check for new ERC20 deposits every minute
   schedule.scheduleJob('* * * * *', () => {
     scanEthereumTransactions.start(db, (tx) => {
       processEthereumTransaction.start(tx)
@@ -72,14 +71,17 @@ async function main(db){
     })
   })
 
-  //highly experimental, dodn't use in production yet
+  //highly experimental, don't use in production yet
   if (process.env.VERIFY_SECONDARY_NODE == 'true'){
     mempool.start(db, logger)
   }
 }
 
-low(adapter)
-  .then(db => {
-    db.defaults({ ethereum_transactions: [], hive_transactions: [], mempool: [], last_eth_block: 0 }).write()
-    main(db)
+database.connect()
+  .then(async (db) => {
+    const setup = require("./libs/setup/setup.js")
+    let isFirstSetup = await setup.isFirstSetup()
+    if (isFirstSetup) await setup.databaseSetup(db)
+    main()
   })
+  .catch((e) => console.error(e))
