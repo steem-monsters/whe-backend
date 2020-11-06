@@ -74,7 +74,7 @@ function updateLastProcessedBlock(block){
 }
 
 function addTransactionToDatabase(hash){
-  database.collection("ethereum_transactions").inertOne({ transactionHash: hash }, (err, result) => {
+  database.collection("ethereum_transactions").insertOne({ transactionHash: hash }, (err, result) => {
     if (err) console.log(err)
   })
 }
