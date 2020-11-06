@@ -7,7 +7,6 @@ const readLastLines = require('read-last-lines');
 const fs = require("fs")
 
 let command = process.argv[2]
-if (!command) console.log("Please use command")
 
 //commands
 switch(command) {
@@ -29,6 +28,8 @@ switch(command) {
   case "status":
     status();
     break;
+  default:
+    help();
 }
 
 let connection = null;
@@ -73,7 +74,7 @@ function status(){
 }
 
 function help(){
-  console.log(`Commands: start, stop, restart, logs, status\nUsage: oracle command`)
+  console.log(`Commands: \n\nstart \nstop \nrestart \nlogs \nstatus\n\nUse: oracle command`)
 }
 
 function logs(){
