@@ -25,7 +25,7 @@ async function start(callback){
               amount: result[i].returnValues.amount / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)
             }
           })
-          // TODO: add tx to db
+          addTransactionToDatabase(result[i].transactionHash)
           callback(result[i]) //return new transaction
         }
       }
@@ -69,6 +69,12 @@ function getLastProcesedBlock(db){
 
 function updateLastProcessedBlock(block){
   database.collection("status").updateOne({ type: "last_eth_block" }, { $set: { block: block } }, (err, result) => {
+    if (err) console.log(err)
+  })
+}
+
+function addTransactionToDatabase(hash){
+  database.collection("ethereum_transactions").inertOne({ transactionHash: hash }, (err, result) => {
     if (err) console.log(err)
   })
 }
