@@ -32,10 +32,10 @@ async function main(db){
   const processEthereumTransaction = require("./libs/ethereum/processEthereumTransaction.js")
   const sendEthereumTokens = require("./libs/ethereum/sendEthereumTokens.js")
 
-  console.log("-".repeat(process.stdout.columns))
+  console.log("-".repeat(process.stdout.columns ? process.stdout.columns : 69))
   console.log(`Wrapped Hive Engine Orace\nCopyright: @fbslo, 2020\n`)
   console.log(`Token Symbol: ${process.env.TOKEN_SYMBOL}\nHive account: ${process.env.HIVE_ACCOUNT}\nEthereum contract: ${process.env.ETHEREUM_CONTRACT_ADDRESS}`)
-  console.log("-".repeat(process.stdout.columns))
+  console.log("-".repeat(process.stdout.columns ? process.stdout.columns : 69))
 
   //track new HE transactions
   hiveEngineDeposits.start((tx) => {
