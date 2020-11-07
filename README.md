@@ -28,7 +28,7 @@ For more info about contract, visit https://github.com/fbslo/wToken-contract
 
 Installation:
 
-For automatic installation, use https://github.com/fbslo/whe-installer
+Read: https://hive.blog/hiveengine/@fbslo/introducing-wrapped-hive-engine-tokens-wtokens-in-a-box
 
 ---
 
