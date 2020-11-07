@@ -98,7 +98,7 @@ function logs(){
 }
 
 function start(){
-  pm2.start('oracle', (err, proc) => {
+  pm2.start('src/index.js', {name: 'oracle'}, (err, proc) => {
     if (err) console.log(err)
     else {
       console.log(`Starting the oracle...`);
