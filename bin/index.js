@@ -57,14 +57,18 @@ function status(){
     pm2.list(async (err, list) => {
       if(err) console.log("Error:", err)
       else {
+        let id = 0
+        for (i in list){
+          if (list[i].name == 'oracle') id = list[i].pm_id
+        }
         let he_block = 0
         fs.readFile('./state_he.json', (err2, result2) => {
           if (err2) he_block = 'error'
           else he_block = JSON.parse(result2.toString()).last_block
           console.log("-".repeat(process.stdout.columns ? process.stdout.columns : 69))
-          console.log(`Oracle status:`, list[0].pm2_env.status.toUpperCase())
+          console.log(`Oracle status:`, list[id].pm2_env.status.toUpperCase())
           console.log(`Last processed Hive Engine block: ${he_block}`)
-          console.log(`Last processed Ethereum block: ${result[0].block}`)
+          console.log(`Last processed Ethereum block: ${result[id].block}`)
           console.log("-".repeat(process.stdout.columns ? process.stdout.columns : 69))
           process.exit(0)
         })
@@ -80,13 +84,17 @@ function help(){
 function logs(){
   pm2.list('oracle', (err, data) => {
     if(err) console.log(err);
-    console.log(data[0].pm2_env.pm_out_log_path)
-    console.log(data[0].pm2_env.pm_err_log_path)
+    let id = 0
+    for (i in data){
+      if (data[i].name == 'oracle') id = data[i].pm_id
+    }
+    console.log(data[id].pm2_env.pm_out_log_path)
+    console.log(data[id].pm2_env.pm_err_log_path)
     let logs = ''
-    readLastLines.read(data[0].pm2_env.pm_err_log_path, 15)
+    readLastLines.read(data[id].pm2_env.pm_err_log_path, 15)
       .then((lines) => {
         logs += lines
-        return readLastLines.read(data[0].pm2_env.pm_out_log_path, 15)
+        return readLastLines.read(data[id].pm2_env.pm_out_log_path, 15)
       })
       .then((lines) => {
         logs += lines
