@@ -23,7 +23,7 @@ assert(methods.includes(process.env.ETHEREUM_CONTRACT_FUNCTION), "ETHEREUM_CONTR
 
 const alreadyProcessed = []
 
-async function main(db){
+async function main(){
   const hiveEngineDeposits = require("./libs/hive/scanHiveEngineTransactions.js");
   const processHiveEngineDeposit = require("./libs/hive/processHiveEngineDeposit.js");
   const mempool = require("./libs/hive/mempool.js")
@@ -39,7 +39,7 @@ async function main(db){
 
   //track new HE transactions
   hiveEngineDeposits.start((tx) => {
-    processHiveEngineDeposit.start(tx, db)
+    processHiveEngineDeposit.start(tx)
       .then(async (result) => {
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         else if (result == 'valid_deposit') {
