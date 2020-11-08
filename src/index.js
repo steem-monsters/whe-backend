@@ -39,7 +39,7 @@ async function main(db){
 
   //track new HE transactions
   hiveEngineDeposits.start((tx) => {
-    processHiveEngineDeposit.start(tx)
+    processHiveEngineDeposit.start(tx, db)
       .then(async (result) => {
         if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
         else if (result == 'valid_deposit') {
