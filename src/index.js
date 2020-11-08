@@ -73,7 +73,7 @@ async function main(){
 
   //highly experimental, don't use in production yet
   if (process.env.VERIFY_SECONDARY_NODE == 'true'){
-    mempool.start(db, logger)
+    mempool.start(logger)
   }
 }
 
