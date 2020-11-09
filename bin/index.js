@@ -59,7 +59,7 @@ function status(){
       else {
         let id = 0
         for (i in list){
-          if (list[i].name == 'oracle') id = list[i].pm_id
+          if (list[i].name === 'oracle') id = list[i].pm_id
         }
         let he_block = 0
         fs.readFile('./state_he.json', (err2, result2) => {
@@ -86,7 +86,7 @@ function logs(){
     if(err) console.log(err);
     let id = 0
     for (i in data){
-      if (data[i].name == 'oracle') id = data[i].pm_id
+      if (data[i].name === 'oracle') id = data[i].pm_id
     }
     console.log(data[id].pm2_env.pm_out_log_path)
     console.log(data[id].pm2_env.pm_err_log_path)

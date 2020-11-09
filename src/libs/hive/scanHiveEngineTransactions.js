@@ -13,17 +13,17 @@ function start(callback){
    hive_engine.stream(async (tx) => {
      let { transactionId, sender, contract, action, payload, logs } = tx
      payload = JSON.parse(payload)
-     if (contract == "tokens" &&
-         action == "transfer" &&
-         payload.symbol == process.env.TOKEN_SYMBOL &&
-         payload.to == process.env.HIVE_ACCOUNT
+     if (contract === "tokens" &&
+         action === "transfer" &&
+         payload.symbol === process.env.TOKEN_SYMBOL &&
+         payload.to === process.env.HIVE_ACCOUNT
      ){
        let txHash = tx.transactionId.split("-")[0]
        if (!alreadyProcessed.includes(txHash)){
          alreadyProcessed.push(txHash)
-         if (process.env.VERIFY_SECONDARY_NODE == 'true'){
+         if (process.env.VERIFY_SECONDARY_NODE === 'true'){
            let isTransactionValid = await getSecondaryNodeInformation(transactionId, tx)
-           if (isTransactionValid == 'transaction_valid') callback(tx)
+           if (isTransactionValid === 'transaction_valid') callback(tx)
          } else {
            callback(tx)
          }
@@ -48,10 +48,10 @@ function getSecondaryNodeInformation(transactionId, tx){
       "id": 1
     })
     .then(function (response) {
-      if (response == null || response.data == null || response.data.result == null) {
+      if (response === null || response.data === null || response.data.result === null) {
         //add transaction to mempool
         let isAlreadyInMemPool = database.collection("mempool").findOne({ transactionId: transactionId })
-        if (isAlreadyInMemPool.length == 0){
+        if (isAlreadyInMemPool.length === 0){
           database.collection("mempool").insertOne({ transactionId: transactionId, transaction: tx }, (err, result) => {
             if (err) console.log(err)
           })
