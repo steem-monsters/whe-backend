@@ -41,8 +41,8 @@ async function main(){
   hiveEngineDeposits.start((tx) => {
     processHiveEngineDeposit.start(tx)
       .then(async (result) => {
-        if (result == 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
-        else if (result == 'valid_deposit') {
+        if (result === 'deposit_refunded') console.log(`Invalid deposit transaction ${tx.transactionId} by ${tx.sender} refunded!`)
+        else if (result === 'valid_deposit') {
           let payload = JSON.parse(tx.payload)
           console.log(`New HE deposit detected! ${payload.quantity} ${process.env.TOKEN_SYMBOL} sent by ${tx.sender}`)
           sendEthereumTokens.start(payload.quantity, payload.memo, tx.sender, logger)
@@ -72,7 +72,7 @@ async function main(){
   })
 
   //highly experimental, don't use in production yet
-  if (process.env.VERIFY_SECONDARY_NODE == 'true'){
+  if (process.env.VERIFY_SECONDARY_NODE === 'true'){
     mempool.start(logger)
   }
 }
