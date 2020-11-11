@@ -52,7 +52,7 @@ async function isAlreadyInTheDatabase(hash, db){
   return new Promise(async (resolve, reject) => {
     database.collection("ethereum_transactions").findOne({ transactionHash: hash }, (err, result) => {
       if (err) reject(err)
-      else if (result == undefined) resolve(false)
+      else if (result === undefined) resolve(false)
       else resolve(true)
     })
   })
