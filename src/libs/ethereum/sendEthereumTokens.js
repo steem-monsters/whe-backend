@@ -50,8 +50,7 @@ async function start(depositAmount, address, sender, logger){
       depositAmount: depositAmount,
       address: address,
       sender: sender,
-      time: new Date(),
-      current_fee: estimatedTransactionFeeInHETokens
+      time: new Date()
     }
     if ((e).toString().includes("Transaction was not mined within 750 seconds")){
       console.log(`Error (not minted within 750 seconds) NOT refunded: ${e}, details: ${JSON.stringify(details)}`)
