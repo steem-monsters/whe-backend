@@ -48,11 +48,11 @@ async function getERC20TransactionsByEvent(tokenContractAddress) {
   })
 }
 
-async function isAlreadyInTheDatabase(hash, db){
+async function isAlreadyInTheDatabase(hash){
   return new Promise(async (resolve, reject) => {
     database.collection("ethereum_transactions").findOne({ transactionHash: hash }, (err, result) => {
       if (err) reject(err)
-      else if (result === undefined) resolve(false)
+      else if (result == undefined) resolve(false)
       else resolve(true)
     })
   })
