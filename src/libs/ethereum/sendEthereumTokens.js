@@ -40,11 +40,11 @@ async function start(depositAmount, address, sender, logger){
       let receipt = await web3.eth.sendSignedTransaction('0x' + createTransaction.rawTransaction);
       let { transactionHash, gasUsed, status } = receipt
       sendDepositConfirmation(transactionHash, sender)
-      if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
-        let spendTransactionFeeInHETokens = parseFloat(gasUsed / hiveEngineTokenPriceInEther).toFixed(process.env.HIVE_TOKEN_PRECISION)
-        let extraFeeRefund = (estimatedTransactionFeeInHETokens / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)) - spendTransactionFeeInHETokens
-        sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
-      }
+      // if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
+      //   let spendTransactionFeeInHETokens = parseFloat(gasUsed / hiveEngineTokenPriceInEther).toFixed(process.env.HIVE_TOKEN_PRECISION)
+      //   let extraFeeRefund = (estimatedTransactionFeeInHETokens / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)) - spendTransactionFeeInHETokens
+      //   sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
+      // }
     }
   } catch(e){
     let details  = {
