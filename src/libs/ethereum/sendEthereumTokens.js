@@ -101,18 +101,19 @@ async function refundFailedTransaction(depositAmount, sender, message){
 }
 
 function getRecomendedGasPrice(){
-  return new Promise((resolve, reject) => {
-    axios
-      .get(`https://ethgasstation.info/api/ethgasAPI.json?api-key=${process.env.ETH_GAS_STATON_API_KEY}`)
-      .then(response => {
-        let speed = process.env.ETH_FEE_SPEED
-        if (response.data[speed]) resolve(response.data[speed] / 10)
-        else reject("data_incorrect")
-      })
-      .catch(err => {
-        reject(err)
-      });
-  })
+  // return new Promise((resolve, reject) => {
+  //   axios
+  //     .get(`https://ethgasstation.info/api/ethgasAPI.json?api-key=${process.env.ETH_GAS_STATON_API_KEY}`)
+  //     .then(response => {
+  //       let speed = process.env.ETH_FEE_SPEED
+  //       if (response.data[speed]) resolve(response.data[speed] / 10)
+  //       else reject("data_incorrect")
+  //     })
+  //     .catch(err => {
+  //       reject(err)
+  //     });
+  // })
+  return 10;
 }
 
 async function caculateTransactionFee(contract, address, amount, gasPrice){
