@@ -16,11 +16,11 @@ async function start(depositAmount, address, sender, logger){
     amount = parseFloat(amount - (amount * (process.env.PERCENTAGE_DEPOSIT_FEE / 100))).toFixed(0); //remove % fee
     let contract = new web3.eth.Contract(tokenABI.ABI, process.env.ETHEREUM_CONTRACT_ADDRESS);
     let nonce = await web3.eth.getTransactionCount(process.env.ETHEREUM_ADDRESS, 'pending');
-    let hiveEngineTokenPriceInEther = await hiveEngineTokenPrice.start(); //get HE token price in ETH
-    let estimatedGasFee = await caculateTransactionFee(contract, address, amount, gasPrice); //get estimated ETH used
-    let estimatedTransactionFeeInHETokens = parseFloat(estimatedGasFee.etherValue / hiveEngineTokenPriceInEther * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)).toFixed(0)
-    amount = parseFloat(amount - estimatedTransactionFeeInHETokens).toFixed(0)
-    if (amount <= 0){ //if amount is less than 0, refund
+    // let hiveEngineTokenPriceInEther = await hiveEngineTokenPrice.start(); //get HE token price in ETH
+    // let estimatedGasFee = await caculateTransactionFee(contract, address, amount, gasPrice); //get estimated ETH used
+    // let estimatedTransactionFeeInHETokens = parseFloat(estimatedGasFee.etherValue / hiveEngineTokenPriceInEther * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)).toFixed(0)
+    amount = parseFloat(amount - 1000).toFixed(0)
+    if (amount <= 1){ //if amount is less than 1, refund
       refundFailedTransaction(depositAmount, sender, 'Amount after fees is less or equal to 0')
     } else {
       let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount).encodeABI(); //either mint() or transfer() tokens
@@ -33,10 +33,11 @@ async function start(depositAmount, address, sender, logger){
         "data": contractFunction,
         "chainId": process.env.ETHEREUM_CHAIN_ID
       };
-      let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN });
-      tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
-      let serializedTx = tx.serialize();
-      let receipt = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
+      // let tx = new Tx(rawTransaction, { chain: process.env.ETHEREUM_CHAIN });
+      // tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
+      let createTransaction = await web3.eth.accounts.signTransaction(rawTransaction, process.env.ETHEREUM_PRIVATE_KEY)
+      // let serializedTx = tx.serialize();
+      let receipt = await web3.eth.sendSignedTransaction('0x' + createTransaction.rawTransaction);
       let { transactionHash, gasUsed, status } = receipt
       sendDepositConfirmation(transactionHash, sender)
       if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
