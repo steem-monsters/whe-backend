@@ -37,7 +37,7 @@ async function start(depositAmount, address, sender, logger){
       // tx.sign(new Buffer.from(process.env.ETHEREUM_PRIVATE_KEY, 'hex'));
       let createTransaction = await web3.eth.accounts.signTransaction(rawTransaction, process.env.ETHEREUM_PRIVATE_KEY)
       // let serializedTx = tx.serialize();
-      let receipt = await web3.eth.sendSignedTransaction('0x' + createTransaction.rawTransaction);
+      let receipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
       let { transactionHash, gasUsed, status } = receipt
       sendDepositConfirmation(transactionHash, sender)
       // if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
