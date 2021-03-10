@@ -20,7 +20,7 @@ async function start(depositAmount, address, sender, logger){
     // let estimatedGasFee = await caculateTransactionFee(contract, address, amount, gasPrice); //get estimated ETH used
     // let estimatedTransactionFeeInHETokens = parseFloat(estimatedGasFee.etherValue / hiveEngineTokenPriceInEther * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)).toFixed(0)
     amount = parseFloat(amount).toFixed(0)
-    if (amount <= 0.05){ //if amount is less than 1, refund
+    if (depositAmount <= 0.05){ //if amount is less than 1, refund
       refundFailedTransaction(depositAmount, sender, 'Amount should be 0.05 CUB or more')
     } else {
       let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount).encodeABI(); //either mint() or transfer() tokens
