@@ -93,8 +93,9 @@ async function refundFailedTransaction(depositAmount, sender, message){
     contractName: "tokens", contractAction: "transfer", contractPayload: {
       symbol: process.env.TOKEN_SYMBOL,
       to: sender,
-      quantity: depositAmount.toString(),
-      memo: `Refund! ${message}.`
+      // quantity: depositAmount.toString(),
+      quantity: Math.pow(10, -(process.env.HIVE_TOKEN_PRECISION)).toString(),
+      memo: `Something went wrong while processing your transaction, but it's possible you will still receive your tokens. If you don't receive them, please contact support.`
     }
   }
   let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
@@ -113,7 +114,7 @@ function getRecomendedGasPrice(){
   //       reject(err)
   //     });
   // })
-  return 10;
+  return 12;
 }
 
 async function caculateTransactionFee(contract, address, amount, gasPrice){
