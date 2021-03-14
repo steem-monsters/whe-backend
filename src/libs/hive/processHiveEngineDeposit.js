@@ -64,16 +64,28 @@ function pushToDatabase(transactionId){
   })
 }
 
-async function transfer(username, amount, hash){
-  let json = {
-    contractName: "tokens", contractAction: "transfer", contractPayload: {
-      symbol: process.env.TOKEN_SYMBOL,
-      to: username,
-      quantity: parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION),
-      memo: `${parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION)} ${process.env.TOKEN_SYMBOL} converted! Transaction hash: ${hash}`
+async function transfer(username, amount, hash, isLeoBridge){
+  if (isLeoBridge){
+    let json = {
+      contractName: "tokens", contractAction: "transfer", contractPayload: {
+        symbol: process.env.TOKEN_SYMBOL,
+        to: username.split(":")[0],
+        quantity: parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION),
+        memo: `${username.split(":")[1]}:${hash}`
+      }
     }
+    let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
+  } else {
+    let json = {
+      contractName: "tokens", contractAction: "transfer", contractPayload: {
+        symbol: process.env.TOKEN_SYMBOL,
+        to: username,
+        quantity: parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION),
+        memo: `${parseFloat(amount).toFixed(process.env.HIVE_TOKEN_PRECISION)} ${process.env.TOKEN_SYMBOL} converted! Transaction hash: ${hash}`
+      }
+    }
+    let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
   }
-  let transaction = await hive.custom_json('ssc-mainnet-hive', json, process.env.HIVE_ACCOUNT, process.env.HIVE_ACCOUNT_PRIVATE_KEY, true);
 }
 
 module.exports.start = start

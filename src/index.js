@@ -61,7 +61,7 @@ async function main(){
         .then((result) => {
           if (!alreadyProcessed.includes(result.hash)){
             alreadyProcessed.push(result.hash) //prevent double spend
-            processHiveEngineDeposit.transfer(result.username, result.amount, result.hash)
+            processHiveEngineDeposit.transfer(result.username, result.amount, result.hash, result.isLeoBridge)
           }
         })
         .catch((err) => {
