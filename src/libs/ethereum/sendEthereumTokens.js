@@ -21,7 +21,7 @@ async function start(depositAmount, address, sender, logger){
     // let estimatedTransactionFeeInHETokens = parseFloat(estimatedGasFee.etherValue / hiveEngineTokenPriceInEther * Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)).toFixed(0)
     amount = parseFloat(amount).toFixed(0)
     if (amount <= 0){ //if amount is less than 1, refund
-      refundFailedTransaction(depositAmount, sender, 'Amount after fees is less or equal to 0')
+      //refundFailedTransaction(depositAmount, sender, 'Amount after fees is less or equal to 0')
     } else {
       let contractFunction = contract.methods[process.env.ETHEREUM_CONTRACT_FUNCTION](address, amount).encodeABI(); //either mint() or transfer() tokens
       let rawTransaction = {
@@ -39,12 +39,14 @@ async function start(depositAmount, address, sender, logger){
       // let serializedTx = tx.serialize();
       let receipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
       let { transactionHash, gasUsed, status } = receipt
-      sendDepositConfirmation(transactionHash, sender)
+      //sendDepositConfirmation(transactionHash, sender)
       // if (gasUsed < estimatedGasFee.estimatedGas){ //refund any extra fees
       //   let spendTransactionFeeInHETokens = parseFloat(gasUsed / hiveEngineTokenPriceInEther).toFixed(process.env.HIVE_TOKEN_PRECISION)
       //   let extraFeeRefund = (estimatedTransactionFeeInHETokens / Math.pow(10, process.env.ETHEREUM_TOKEN_PRECISION)) - spendTransactionFeeInHETokens
       //   sendFeeRefund(parseFloat(extraFeeRefund).toFixed(process.env.HIVE_TOKEN_PRECISION), sender)
-      // }
+			// }
+			
+			return receipt;
     }
   } catch(e){
     let details  = {
@@ -59,7 +61,7 @@ async function start(depositAmount, address, sender, logger){
     } else {
       console.log(`Error while sending ERC-20 token, refunded: ${e}, details: ${JSON.stringify(details)}`)
       logger.log('error', `Error while sending ERC-20 token, refunded: ${e}, details: ${JSON.stringify(details)}`)
-      refundFailedTransaction(depositAmount, sender, 'Internal server error while processing your request')
+      //refundFailedTransaction(depositAmount, sender, 'Internal server error while processing your request')
     }
   }
 }
